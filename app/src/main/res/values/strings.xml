@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">StepCounter</string>
+    <string name="step_counter_attribution_label" translatable="false">StepCounter</string>
+</resources>
