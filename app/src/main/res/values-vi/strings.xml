@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Đếm Bước Chân</string>
+    <string name="permission_activity_recognition">Ứng dụng cần quyền truy cập đến cảm biến di chuyển của bạn</string>
+    <string name="permission_post_notifications">Ứng dụng cần quyền tạo thông báo</string>
+    <string name="permission_general">Ứng dụng cần được cấp các quyền sau</string>
+    <string name="request_permission_title">Yêu cầu quyền</string>
+    <string name="request_permission_message">Ứng dụng cần các quyền sau:</string>
+    <string name="positive_button">Đồng ý</string>
+    <string name="negative_button">Từ chối</string>
+    <string name="settings_dialog_message">Vui lòng cấp quyền trong Settings để tiếp tục</string>
+    <string name="open_settings">Mở Settings</string>
+    <string name="cancel">Hủy</string>
+    <string name="notification_title">Đang đếm bước chân</string>
+    <string name="notification_text">Nhấn để mở ứng dụng</string>
+    <string name="notification_channel_name">Đếm bước chân</string>
+    <string name="notification_channel_desc">Channel cho đếm bước chân</string>
+</resources>

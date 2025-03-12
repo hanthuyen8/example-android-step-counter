@@ -3,6 +3,7 @@ package com.nhanc18.personal.step.counter
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,30 +28,46 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
-    private val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                startService(Intent(this, StepCounterService::class.java))
-            } else {
-                StepData.setError("Không đủ quyền để đếm bước chân.")
-            }
-        }
+    private lateinit var permissionHelper: PermissionHelper
+
+    private val requiredPermissions = mutableListOf<PermissionRequired>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        requiredPermissions.add(
+            PermissionRequired(
+                android.Manifest.permission.ACTIVITY_RECOGNITION,
+                getString(R.string.permission_activity_recognition),
+                29
+            )
+        )
+        requiredPermissions.add(
+            PermissionRequired(
+                android.Manifest.permission.POST_NOTIFICATIONS,
+                getString(R.string.permission_post_notifications),
+                33
+            )
+        )
+        permissionHelper = PermissionHelper(this)
+
         setContent {
             MaterialTheme {
-                StepCounterScreen()
+                StepCounterScreen {
+                    requestPermissions()
+                }
             }
         }
+    }
 
-        // Kiểm tra và yêu cầu quyền sau khi UI hiển thị
-        if (checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            startService(Intent(this, StepCounterService::class.java))
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                permissionLauncher.launch(android.Manifest.permission.ACTIVITY_RECOGNITION)
-            }
+    override fun onResume() {
+        super.onResume()
+
+        // Kiểm tra lại quyền khi Activity resumed (sau khi từ Settings về hoặc bất kỳ lúc nào)
+        val result = permissionHelper.checkPermissions(requiredPermissions)
+        if (!result.allGranted) {
+            onNotEnoughPermission()
+            requestPermissions()
         }
     }
 
@@ -58,13 +75,55 @@ class MainActivity : ComponentActivity() {
         StepData.saveSession(this)
         super.onStop()
     }
+
+    private fun onNotEnoughPermission() {
+        StepData.setError("Không đủ quyền để đếm bước chân.")
+    }
+
+    private fun onAllPermissionGranted() {
+        startService(Intent(this, StepCounterService::class.java))
+        StepData.setError(null)
+    }
+
+    private fun requestPermissions() {
+        val status = permissionHelper.checkPermissions(
+            requiredPermissions
+        )
+        if (status.allGranted) {
+            onAllPermissionGranted()
+        } else {
+            onNotEnoughPermission()
+
+            permissionHelper.requestPermissions(
+                requiredPermissions
+            ) { result ->
+                when {
+                    result.allGranted -> {
+                        onAllPermissionGranted()
+                    }
+
+                    result.permanentlyDeniedPermissions.isNotEmpty() -> {
+                        // quyền bị denied vĩnh viễn
+                        onNotEnoughPermission()
+                    }
+
+                    else -> {
+                        // quyền bị denied mới 1 lần
+                        onNotEnoughPermission()
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
-fun StepCounterScreen() {
+fun StepCounterScreen(
+    onAskPermissionRequest: () -> Unit
+) {
     val context = LocalContext.current
-    val steps by StepData.steps // Đọc trực tiếp từ State
-    val distance by StepData.distance
+    val steps by StepData.steps
+    val initialSteps by StepData.initialSteps
     val error by StepData.error
 
     Column(
@@ -72,21 +131,23 @@ fun StepCounterScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Tổng số bước: $steps", style = MaterialTheme.typography.headlineSmall)
+        Text(text = "Đang bước: $steps", style = MaterialTheme.typography.headlineSmall)
         Text(
-            text = "Khoảng cách: %.2f mét".format(distance),
+            text = "Khoảng cách: %.2f mét".format(steps * 0.6),
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Text(
+            text = "Tổng số đã bước: ${initialSteps + steps}",
             style = MaterialTheme.typography.headlineSmall
         )
         error?.let {
             Text(text = it, color = MaterialTheme.colorScheme.error)
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            val stepsSinceLast = StepData.getStepsSinceLast(context)
-            Toast.makeText(context, "Số bước từ lần cuối: $stepsSinceLast", Toast.LENGTH_SHORT)
-                .show()
-        }) {
-            Text("Hiện số bước từ lần cuối")
+        Button(
+            onClick = onAskPermissionRequest
+        ) {
+            Text("Cấp quyền")
         }
     }
 }

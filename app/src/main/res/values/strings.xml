@@ -1,4 +1,19 @@
 <resources>
-    <string name="app_name">StepCounter</string>
+    <string name="app_name" translatable="false">Step Counter</string>
     <string name="step_counter_attribution_label" translatable="false">StepCounter</string>
+
+    <string name="permission_activity_recognition">The app needs access to your activity sensor</string>
+    <string name="permission_post_notifications">The app needs permission to post notifications</string>
+    <string name="permission_general">The app needs you to allow following permissions</string>
+    <string name="request_permission_title">Permission Request</string>
+    <string name="request_permission_message">The app needs the following permissions:</string>
+    <string name="positive_button">Allow</string>
+    <string name="negative_button">Deny</string>
+    <string name="settings_dialog_message">Please grant permissions in Settings to continue</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="cancel">Cancel</string>
+    <string name="notification_title">Is counting steps</string>
+    <string name="notification_text">Tap to open the app</string>
+    <string name="notification_channel_name">Step Counter</string>
+    <string name="notification_channel_desc">Channel for Step Counter</string>
 </resources>
