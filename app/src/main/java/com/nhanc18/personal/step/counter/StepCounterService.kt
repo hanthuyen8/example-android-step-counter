@@ -111,18 +111,19 @@ class StepCounterService : Service(), SensorEventListener {
     }
 
     private fun registerSensorIfPermitted() {
-        if (ContextCompat.checkSelfPermission(
+        val isApiLowerThan29 = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+        if (isApiLowerThan29 || ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACTIVITY_RECOGNITION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            val stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
+            val stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             if (stepSensor != null && !isSensorRegistered) {
                 sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_UI)
                 isSensorRegistered = true
                 Log.d(TAG, "Step sensor registered")
             } else if (stepSensor == null) {
-                Log.e(TAG, "Step sensor not available")
+                Log.w(TAG, "Step sensor not available")
                 stopSelf()
                 StepData.saveSession(this)
             }
