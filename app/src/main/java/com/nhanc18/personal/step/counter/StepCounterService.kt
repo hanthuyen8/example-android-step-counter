@@ -20,7 +20,11 @@ import androidx.core.content.ContextCompat
 class StepCounterService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var isSensorRegistered = false
-    private val TAG = "step-counter"
+
+    companion object {
+        private const val TAG = "step-counter"
+        private const val ACTION_STOP_SERVICE = "com.ee.fitness.STOP_SERVICE"
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -48,14 +52,14 @@ class StepCounterService : Service(), SensorEventListener {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "STOP_SERVICE") {
+        if (intent?.action == ACTION_STOP_SERVICE) {
             stopForeground(true)
             stopSelf()
             StepData.saveSession(this)
             Log.w(TAG, "Service stopped by user")
-        } else {
-            registerSensorIfPermitted()
+            return START_NOT_STICKY
         }
+        registerSensorIfPermitted()
         return START_STICKY
     }
 
@@ -89,12 +93,23 @@ class StepCounterService : Service(), SensorEventListener {
             val pendingIntent =
                 PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
+            val stopIntent = Intent(this, StepCounterService::class.java).apply {
+                action = ACTION_STOP_SERVICE
+            }
+            val stopPendingIntent =
+                PendingIntent.getService(this, 1, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+
             val notification = NotificationCompat.Builder(this, "step_channel")
                 .setContentTitle(getString(R.string.notification_title))
                 .setContentText(getString(R.string.notification_text))
                 .setSmallIcon(R.drawable.ic_notification_step_counter)
                 .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
+                .addAction(
+                    R.drawable.ic_stop,
+                    getString(R.string.notification_stop),
+                    stopPendingIntent
+                )
+                .setAutoCancel(false)
                 .build()
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
